@@ -16,7 +16,7 @@ function App() {
     { id: 3, name: 'Mission Site Omega' },
   ];
 
-  const maxTableResults = 40; // Maximum number of rows in the table
+  const maxTableResults = 72; // Maximum number of rows in the displayed table
 
   useEffect(() => {
     setLoading(true);
@@ -70,6 +70,35 @@ function App() {
     return { mean, median, min, max, stdDev };
   };
 
+  const calculateDailyStats = (sensorId) => {
+    const sensorData = data.filter((item) => item.sensor_id === sensorId);
+
+    const groupedByDate = sensorData.reduce((acc, item) => {
+      const date = new Date(item.timestamp).toISOString().split('T')[0]; // Get only the date part
+      if (!acc[date]) acc[date] = [];
+      acc[date].push(parseFloat(item.topic_value));
+      return acc;
+    }, {});
+
+    const dailyStats = Object.entries(groupedByDate).map(([date, values]) => {
+      const mean = (values.reduce((sum, val) => sum + val, 0) / values.length).toFixed(2);
+      const sortedValues = [...values].sort((a, b) => a - b);
+      const median =
+        values.length % 2 === 0
+          ? ((sortedValues[values.length / 2 - 1] + sortedValues[values.length / 2]) / 2).toFixed(2)
+          : sortedValues[Math.floor(values.length / 2)].toFixed(2);
+      const min = Math.min(...values).toFixed(2);
+      const max = Math.max(...values).toFixed(2);
+      const variance =
+        values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
+      const stdDev = Math.sqrt(variance).toFixed(2);
+
+      return { date, mean, median, min, max, stdDev };
+    });
+
+    return dailyStats;
+  };
+
   const temperatureStats = calculateStats(1);
   const humidityStats = calculateStats(2);
   const airQualityStats = calculateStats(3);
@@ -77,6 +106,10 @@ function App() {
   const temperatureData = processData(1);
   const humidityData = processData(2);
   const airQualityData = processData(3);
+
+  const dailyTemperatureStats = calculateDailyStats(1);
+  const dailyHumidityStats = calculateDailyStats(2);
+  const dailyAirQualityStats = calculateDailyStats(3);
 
   return (
     <div className="App">
@@ -189,6 +222,50 @@ function App() {
                   <p>Min: {airQualityStats.min}</p>
                   <p>Max: {airQualityStats.max}</p>
                   <p>Std Dev: {airQualityStats.stdDev}</p>
+                </div>
+              </div>
+            </div>
+            <div className="daily-stats-container">
+              <h3>Daily Statistics 📅</h3>
+              <div className="daily-stats-grid">
+                <div className="stats-card">
+                  <h4>Temperature</h4>
+                  {dailyTemperatureStats.map((stat, index) => (
+                    <div key={index}>
+                      <p>Date: {stat.date}</p>
+                      <p>Mean: {stat.mean}</p>
+                      <p>Median: {stat.median}</p>
+                      <p>Min: {stat.min}</p>
+                      <p>Max: {stat.max}</p>
+                      <p>Std Dev: {stat.stdDev}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="stats-card">
+                  <h4>Humidity</h4>
+                  {dailyHumidityStats.map((stat, index) => (
+                    <div key={index}>
+                      <p>Date: {stat.date}</p>
+                      <p>Mean: {stat.mean}</p>
+                      <p>Median: {stat.median}</p>
+                      <p>Min: {stat.min}</p>
+                      <p>Max: {stat.max}</p>
+                      <p>Std Dev: {stat.stdDev}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="stats-card">
+                  <h4>Air Quality</h4>
+                  {dailyAirQualityStats.map((stat, index) => (
+                    <div key={index}>
+                      <p>Date: {stat.date}</p>
+                      <p>Mean: {stat.mean}</p>
+                      <p>Median: {stat.median}</p>
+                      <p>Min: {stat.min}</p>
+                      <p>Max: {stat.max}</p>
+                      <p>Std Dev: {stat.stdDev}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
